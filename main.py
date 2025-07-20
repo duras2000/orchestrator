@@ -119,9 +119,21 @@ Here are the email headers:
     resolved_attendees = []
     for name in event_data.get("attendees", []):
         email = resolve_name_to_email(name, ["to", "cc"])
-        resolved_attendees.append(email if email else name)
+        if email and email.lower() != "talmon@gmail.com":
+            resolved_attendees.append(email)
+        elif name.lower() != "talmon":
+            resolved_attendees.append(name)
 
-    event_data["attendees"] = resolved_attendees
+    TALMON_EMAIL = "talmon@gmail.com"
+
+    event_data["attendees"] = [
+        {"email": TALMON_EMAIL, "responseStatus": "accepted"}
+    ] + [
+        {"email": a} for a in resolved_attendees
+        if a.lower() != TALMON_EMAIL
+    ]
+    
+    event_data["timezone"] = "Asia/Jerusalem"
 
     # Step 5: Create calendar event
     cal_resp = requests.post(
