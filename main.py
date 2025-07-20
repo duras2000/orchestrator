@@ -1,6 +1,6 @@
-
 import os
 import requests
+import json
 from fastapi import FastAPI
 from pydantic import BaseModel
 from openai import OpenAI
@@ -75,6 +75,7 @@ Here is the Email content:
 Here are the email headers:
 {email_headers}
 """
+
     chat = client.chat.completions.create(
         model="gpt-4o",
         messages=[
@@ -85,12 +86,12 @@ Here are the email headers:
     reply = chat.choices[0].message.content.strip()
 
     if input.dry_run:
-        return {"email": latest, "extracted": reply}
+        return {"email": snippet, "extracted": reply}
 
     try:
-        event_data = eval(reply)
-    except:
-        return {"error": "Could not parse GPT reply", "raw": reply}
+        event_data = json.loads(reply)
+    except Exception as e:
+        return {"error": "Could not parse GPT reply", "raw": reply, "exception": str(e)}
 
     # Step 3: Schedule it
     cal_resp = requests.post(
