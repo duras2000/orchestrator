@@ -1,6 +1,7 @@
 import os
-import requests
+import re
 import json
+import requests
 from fastapi import FastAPI
 from pydantic import BaseModel
 from openai import OpenAI
@@ -40,7 +41,7 @@ def orchestrate(input: OrchestratorInput):
     snippet = latest_msg.get("snippet", "")
     email_headers = latest_msg.get("headers", {})
 
-    # Step 2: Use GPT-4 to check if it's a scheduling request
+    # Step 2: Use GPT to extract meeting info
     prompt = f"""
 You are Lena, a friendly yet professional virtual assistant. You help Talmon by managing his calendar based on email instructions.
 
@@ -101,10 +102,31 @@ Here are the email headers:
             "exception": str(e)
         }
 
-    # Step 3: Schedule it
+    # Step 3: Resolve attendee names to emails (from headers)
+    def resolve_name_to_email(name, header_fields):
+        for field in header_fields:
+            value = email_headers.get(field, "")
+            matches = re.findall(r'([^<>,"]+)\s*<([^<>@]+@[^<>]+)>', value)
+            for full_name, email in matches:
+                if name.lower() in full_name.strip().lower():
+                    return email
+        return None
+
+    resolved_attendees = []
+    for name in event_data.get("attendees", []):
+        email = resolve_name_to_email(name, ["to", "cc"])
+        resolved_attendees.append(email if email else name)  # fallback to name
+
+    event_data["attendees"] = resolved_attendees
+
+    # Step 4: Schedule the event
     cal_resp = requests.post(
         f"{GCAL_WRAPPER_URL}/mcp/query",
         headers=headers,
         json={"tool": "create_event", "input": event_data}
     )
-    return {"calendar_response": cal_resp.json()}
+
+    return {
+        "calendar_response": cal_resp.json(),
+        "event_data": event_data
+    }
