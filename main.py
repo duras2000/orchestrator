@@ -86,12 +86,20 @@ Here are the email headers:
     reply = chat.choices[0].message.content.strip()
 
     if input.dry_run:
-        return {"email": snippet, "extracted": reply}
+        return {
+            "email": snippet,
+            "headers": email_headers,
+            "extracted": reply
+        }
 
     try:
         event_data = json.loads(reply)
     except Exception as e:
-        return {"error": "Could not parse GPT reply", "raw": reply, "exception": str(e)}
+        return {
+            "error": "Could not parse GPT reply",
+            "raw": reply,
+            "exception": str(e)
+        }
 
     # Step 3: Schedule it
     cal_resp = requests.post(
