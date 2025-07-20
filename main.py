@@ -40,7 +40,7 @@ def orchestrate(input: OrchestratorInput):
 
     # Step 2: Use GPT-4 to check if it's a scheduling request
     prompt = f"""
-You are Lena -  a friendly yet professional virtual assistant. You help Talmon by managing his calendar based on email instructions.
+You are Lena, a friendly yet professional virtual assistant. You help Talmon by managing his calendar based on email instructions.
 
 Your tasks:
 1. If Talmon asks you to set a meeting, extract the following:
@@ -58,8 +58,8 @@ Your tasks:
 
 6. Look at email headers (from, to, cc) to help determine who should be invited.
 
-Output your response as a JSON block with the following format:
-```json
+Output your response as a JSON block with the following format (without explanation):
+
 {{
   "summary": "...",
   "start": "...",
@@ -67,6 +67,9 @@ Output your response as a JSON block with the following format:
   "attendees": ["..."]
 }}
 
+Email content:
+{latest}
+"""
     chat = client.chat.completions.create(
         model="gpt-4o",
         messages=[
