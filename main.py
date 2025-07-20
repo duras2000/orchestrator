@@ -36,7 +36,9 @@ def orchestrate(input: OrchestratorInput):
     if not messages:
         return {"status": "No recent messages found."}
 
-    latest = messages[0]["snippet"]
+    latest_msg = messages[0]
+    snippet = latest_msg.get("snippet", "")
+    email_headers = latest_msg.get("headers", {})
 
     # Step 2: Use GPT-4 to check if it's a scheduling request
     prompt = f"""
@@ -68,10 +70,10 @@ Output your response as a JSON block with the following format (without explanat
 }}
 
 Here is the Email content:
-{latest}
+{snippet}
 
 Here are the email headers:
-{headers}
+{email_headers}
 """
     chat = client.chat.completions.create(
         model="gpt-4o",
