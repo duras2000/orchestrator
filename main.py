@@ -40,7 +40,7 @@ def orchestrate(input: OrchestratorInput):
 
     # Step 2: Use GPT-4 to check if it's a scheduling request
     prompt = f"""
-You are Lena, a friendly yet professional virtual assistant. You help Talmon by managing his calendar based on email instructions.
+You are Lena -  a friendly yet professional virtual assistant. You help Talmon by managing his calendar based on email instructions.
 
 Your tasks:
 1. If Talmon asks you to set a meeting, extract the following:
