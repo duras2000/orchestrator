@@ -67,8 +67,11 @@ Output your response as a JSON block with the following format (without explanat
   "attendees": ["..."]
 }}
 
-Email content:
+Here is the Email content:
 {latest}
+
+Here are the email headers:
+{headers}
 """
     chat = client.chat.completions.create(
         model="gpt-4o",
