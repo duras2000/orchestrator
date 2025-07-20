@@ -42,7 +42,7 @@ def orchestrate(input: OrchestratorInput):
     prompt = f"You are a virtual assistant. Extract from this email whether the user is trying to schedule a meeting. If yes, return JSON like: {{'summary': '...', 'start': '...', 'end': '...', 'attendees': ['...']}}. Email:\n\n{latest}"
 
     chat = client.chat.completions.create(
-        model="gpt-4",
+        model="gpt-4o",
         messages=[
             {"role": "system", "content": "You help extract calendar events from emails."},
             {"role": "user", "content": prompt}
