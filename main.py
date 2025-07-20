@@ -135,7 +135,9 @@ Here are the email headers:
     
     event_data["timezone"] = "Asia/Jerusalem"
 
-    # Step 5: Create calendar event
+    # Step 5: Create calendar event LXX
+    print("EVENT DATA SENT TO CALENDAR WRAPPER:")
+    print(json.dumps(event_data, indent=2))
     cal_resp = requests.post(
         f"{GCAL_WRAPPER_URL}/mcp/query",
         headers=headers,
