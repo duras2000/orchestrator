@@ -2,6 +2,7 @@ import os
 import re
 import json
 import requests
+from datetime import datetime
 from fastapi import FastAPI
 from pydantic import BaseModel
 from openai import OpenAI
@@ -41,27 +42,27 @@ def orchestrate(input: OrchestratorInput):
     snippet = latest_msg.get("snippet", "")
     email_headers = latest_msg.get("headers", {})
 
-    # Step 2: Use GPT to extract meeting info
+    # Compute today's date (for GPT awareness)
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    # Step 2: Use GPT-4 to extract meeting intent
     prompt = f"""
-You are Lena, a friendly yet professional virtual assistant. You help Talmon by managing his calendar based on email instructions.
+You are Lena, a highly competent virtual assistant based in Israel. You help Talmon manage his calendar by reading and interpreting email instructions.
+
+Today’s date is {today}.
+You are located in Israel. Please apply Israel Daylight Time (UTC+3) when converting local times like "12:30pm" into ISO 8601 timestamps.
 
 Your tasks:
 1. If Talmon asks you to set a meeting, extract the following:
-   - Meeting title (use your judgment if not explicitly stated)
-   - Start and end time (including timezone)
-   - List of attendees (use email headers like To/CC and names mentioned in the message)
+   - A meaningful meeting title (even if not explicitly stated)
+   - Start and end time in full ISO 8601 format (including timezone offset)
+   - Attendee names (you will resolve them to email addresses using headers later)
 
-2. Only suggest times between 10:00 AM and 4:00 PM local time unless Talmon specifically asks for a different time.
+2. Only suggest times between 10:00 AM and 4:00 PM Israel time unless Talmon explicitly says otherwise.
 
-3. Talmon might tell you his current location or schedule in the message — use that to adjust for local time.
+3. Use email headers (To, CC) to help determine who should be invited.
 
-4. If someone else suggests a meeting time outside those hours, do not confirm it — simply extract the intent, and let Talmon decide.
-
-5. If Talmon explicitly requests a specific time, always follow it, even if it's outside normal working hours.
-
-6. Look at email headers (from, to, cc) to help determine who should be invited.
-
-Output your response as a JSON block with the following format (without explanation):
+Output a pure JSON block in the following format — no explanation, no markdown, just JSON:
 
 {{
   "summary": "...",
@@ -93,6 +94,7 @@ Here are the email headers:
             "extracted": reply
         }
 
+    # Step 3: Parse GPT response safely
     try:
         event_data = json.loads(reply)
     except Exception as e:
@@ -102,7 +104,7 @@ Here are the email headers:
             "exception": str(e)
         }
 
-    # Step 3: Resolve attendee names to emails (from headers)
+    # Step 4: Resolve attendee names to emails using headers
     def resolve_name_to_email(name, header_fields):
         for field in header_fields:
             value = email_headers.get(field, "")
@@ -115,11 +117,11 @@ Here are the email headers:
     resolved_attendees = []
     for name in event_data.get("attendees", []):
         email = resolve_name_to_email(name, ["to", "cc"])
-        resolved_attendees.append(email if email else name)  # fallback to name
+        resolved_attendees.append(email if email else name)
 
     event_data["attendees"] = resolved_attendees
 
-    # Step 4: Schedule the event
+    # Step 5: Create calendar event
     cal_resp = requests.post(
         f"{GCAL_WRAPPER_URL}/mcp/query",
         headers=headers,
