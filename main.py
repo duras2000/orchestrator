@@ -141,8 +141,18 @@ Here are the email headers:
         headers=headers,
         json={"tool": "create_event", "input": event_data}
     )
+    try:
+        cal_json = cal_resp.json()
+    except Exception as e:
+        cal_json = {
+            "error": "Failed to decode calendar response as JSON",
+            "status_code": cal_resp.status_code,
+            "text": cal_resp.text,
+            "exception": str(e)
+        }
 
     return {
-        "calendar_response": cal_resp.json(),
+        "calendar_response": cal_json,
         "event_data": event_data
     }
+    
