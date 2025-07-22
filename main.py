@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from openai import OpenAI
 
+
 app = FastAPI()
 
 # Load env vars
